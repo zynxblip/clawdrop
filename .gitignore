@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+*.app
+*.dmg
+*.dmg.sha256
+dist/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Runtime bundles
+runtime/
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Config with secrets
+*.env
+.clawdrop/

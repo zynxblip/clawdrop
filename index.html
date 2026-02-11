@@ -837,6 +837,81 @@
         }
         .solana-badge svg { width: 14px; height: 14px; }
 
+        /* ── Tip Modal ── */
+        .tip-modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .tip-modal-overlay.visible { display: flex; }
+        .tip-modal {
+            background: var(--surface);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 48px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+        }
+        .tip-modal-close {
+            position: absolute; top: 16px; right: 16px;
+            background: none; border: none;
+            color: var(--text-tertiary); font-size: 20px;
+            cursor: pointer; padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .tip-modal-close:hover { color: var(--text); background: var(--bg); }
+        .tip-modal h3 {
+            font-size: 22px; font-weight: 700;
+            margin-bottom: 8px; letter-spacing: -0.02em;
+        }
+        .tip-modal .tip-subtitle {
+            color: var(--text-secondary); font-size: 14px;
+            margin-bottom: 28px;
+        }
+        .tip-modal .tip-label {
+            font-size: 12px; font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+        .tip-address-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--accent-bright);
+            word-break: break-all;
+            margin-bottom: 16px;
+            user-select: all;
+        }
+        .tip-copy-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--accent-dim);
+            color: white;
+            border: none; border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+        .tip-copy-btn:hover { background: var(--accent); }
+        .tip-copy-btn.copied { background: #059669; }
+        .tip-networks {
+            font-size: 12px; color: var(--text-tertiary);
+        }
+
         /* ── Responsive ── */
         @media (max-width: 900px) {
             .feature-grid, .testimonial-grid { grid-template-columns: 1fr 1fr; }
@@ -869,10 +944,10 @@
                 ClawDrop
             </a>
             <div class="nav-links">
+                <a href="#configure">Configure</a>
                 <a href="#features">Features</a>
                 <a href="#architecture">Architecture</a>
                 <a href="#how-it-works">How It Works</a>
-                <a href="#configure">Configure</a>
                 <a href="https://github.com/zynxblip/clawdrop/releases" class="nav-cta">Download</a>
             </div>
         </nav>
@@ -903,7 +978,7 @@
                     <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                     View Source
                 </a>
-                <a href="#tip" class="btn btn-tip">☕ Buy us a coffee</a>
+                <a href="#" onclick="openTipModal();return false" class="btn btn-tip">☕ Buy us a coffee</a>
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
@@ -917,6 +992,80 @@
                 <div class="hero-stat">
                     <div class="hero-stat-value orange">0</div>
                     <div class="hero-stat-label">External dependencies</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Config Wizard ── -->
+    <section class="config-wizard" id="configure">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Get Started</div>
+                <h2 class="section-title">Configure Your Agent</h2>
+                <p class="section-desc">Generate your config, download ClawDrop, and launch in under a minute.</p>
+            </div>
+            <div class="wizard-card">
+                <div class="wizard-steps-bar">
+                    <div class="wizard-step-pill active"><span class="pill-num">1</span> Configure</div>
+                    <div class="wizard-step-pill"><span class="pill-num">2</span> Download Config</div>
+                    <div class="wizard-step-pill"><span class="pill-num">3</span> Download ClawDrop</div>
+                    <div class="wizard-step-pill"><span class="pill-num">4</span> Launch</div>
+                </div>
+                <div class="wizard-form" id="wizard-form">
+                    <div class="wizard-field full-width">
+                        <label for="wiz-apikey">API Key</label>
+                        <input type="text" id="wiz-apikey" placeholder="sk-..." autocomplete="off">
+                        <span class="field-note">Get one from <a href="https://anthropic.com" style="color:var(--accent)">anthropic.com</a>, <a href="https://openrouter.ai" style="color:var(--accent)">openrouter.ai</a>, or <a href="https://openai.com" style="color:var(--accent)">openai.com</a></span>
+                    </div>
+                    <div class="wizard-field">
+                        <label for="wiz-channel">Communication Channel</label>
+                        <select id="wiz-channel">
+                            <option value="">Select a channel…</option>
+                            <option value="telegram">Telegram</option>
+                            <option value="whatsapp">WhatsApp</option>
+                            <option value="discord">Discord</option>
+                            <option value="signal">Signal</option>
+                        </select>
+                    </div>
+                    <div class="wizard-field" id="bot-token-field">
+                        <label for="wiz-bottoken">Bot Token</label>
+                        <input type="text" id="wiz-bottoken" placeholder="">
+                        <span class="field-note" id="bot-token-note"></span>
+                    </div>
+                    <div class="wizard-field">
+                        <label for="wiz-model">Model</label>
+                        <select id="wiz-model">
+                            <option value="anthropic/claude-opus-4">Claude Opus 4</option>
+                            <option value="anthropic/claude-sonnet-4" selected>Claude Sonnet 4</option>
+                            <option value="openai/gpt-4o">GPT-4o</option>
+                            <option value="ollama/llama3">Llama 3 (Local)</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="wizard-field" id="custom-model-field">
+                        <label for="wiz-custom-model">Custom Model ID</label>
+                        <input type="text" id="wiz-custom-model" placeholder="provider/model-name">
+                    </div>
+                    <div class="wizard-field">
+                        <label for="wiz-name">Your Name</label>
+                        <input type="text" id="wiz-name" placeholder="e.g. Rocky">
+                    </div>
+                </div>
+                <div class="wizard-actions">
+                    <button class="btn btn-primary" onclick="generateConfig()">⚡ Generate Config</button>
+                </div>
+                <div class="wizard-output" id="wizard-output">
+                    <pre class="wizard-preview" id="wizard-preview"></pre>
+                    <div class="wizard-download-actions">
+                        <button class="btn btn-primary" onclick="downloadConfig()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download openclaw.json
+                        </button>
+                        <a href="https://github.com/zynxblip/clawdrop/releases" class="btn btn-ghost">
+                            Download ClawDrop →
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1151,80 +1300,6 @@
         </div>
     </section>
 
-    <!-- ── Config Wizard ── -->
-    <section class="config-wizard" id="configure">
-        <div class="container">
-            <div class="section-header center">
-                <div class="section-label">Get Started</div>
-                <h2 class="section-title">Configure Your Agent</h2>
-                <p class="section-desc">Generate your config, download ClawDrop, and launch in under a minute.</p>
-            </div>
-            <div class="wizard-card">
-                <div class="wizard-steps-bar">
-                    <div class="wizard-step-pill active"><span class="pill-num">1</span> Configure</div>
-                    <div class="wizard-step-pill"><span class="pill-num">2</span> Download Config</div>
-                    <div class="wizard-step-pill"><span class="pill-num">3</span> Download ClawDrop</div>
-                    <div class="wizard-step-pill"><span class="pill-num">4</span> Launch</div>
-                </div>
-                <div class="wizard-form" id="wizard-form">
-                    <div class="wizard-field full-width">
-                        <label for="wiz-apikey">API Key</label>
-                        <input type="text" id="wiz-apikey" placeholder="sk-..." autocomplete="off">
-                        <span class="field-note">Get one from <a href="https://anthropic.com" style="color:var(--accent)">anthropic.com</a>, <a href="https://openrouter.ai" style="color:var(--accent)">openrouter.ai</a>, or <a href="https://openai.com" style="color:var(--accent)">openai.com</a></span>
-                    </div>
-                    <div class="wizard-field">
-                        <label for="wiz-channel">Communication Channel</label>
-                        <select id="wiz-channel">
-                            <option value="">Select a channel…</option>
-                            <option value="telegram">Telegram</option>
-                            <option value="whatsapp">WhatsApp</option>
-                            <option value="discord">Discord</option>
-                            <option value="signal">Signal</option>
-                        </select>
-                    </div>
-                    <div class="wizard-field" id="bot-token-field">
-                        <label for="wiz-bottoken">Bot Token</label>
-                        <input type="text" id="wiz-bottoken" placeholder="">
-                        <span class="field-note" id="bot-token-note"></span>
-                    </div>
-                    <div class="wizard-field">
-                        <label for="wiz-model">Model</label>
-                        <select id="wiz-model">
-                            <option value="anthropic/claude-opus-4">Claude Opus 4</option>
-                            <option value="anthropic/claude-sonnet-4" selected>Claude Sonnet 4</option>
-                            <option value="openai/gpt-4o">GPT-4o</option>
-                            <option value="ollama/llama3">Llama 3 (Local)</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    <div class="wizard-field" id="custom-model-field">
-                        <label for="wiz-custom-model">Custom Model ID</label>
-                        <input type="text" id="wiz-custom-model" placeholder="provider/model-name">
-                    </div>
-                    <div class="wizard-field">
-                        <label for="wiz-name">Your Name</label>
-                        <input type="text" id="wiz-name" placeholder="e.g. Rocky">
-                    </div>
-                </div>
-                <div class="wizard-actions">
-                    <button class="btn btn-primary" onclick="generateConfig()">⚡ Generate Config</button>
-                </div>
-                <div class="wizard-output" id="wizard-output">
-                    <pre class="wizard-preview" id="wizard-preview"></pre>
-                    <div class="wizard-download-actions">
-                        <button class="btn btn-primary" onclick="downloadConfig()">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download openclaw.json
-                        </button>
-                        <a href="https://github.com/zynxblip/clawdrop/releases" class="btn btn-ghost">
-                            Download ClawDrop →
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ── Final CTA ── -->
     <section class="final-cta">
         <div class="container">
@@ -1255,7 +1330,7 @@
                         <a href="https://github.com/zynxblip/clawdrop">GitHub</a>
                         <a href="https://github.com/zynxblip/clawdrop/issues">Issues</a>
                         <a href="https://github.com/zynxblip/clawdrop/blob/main/LICENSE">License</a>
-                        <a href="#tip">☕ Tip</a>
+                        <a href="#" onclick="openTipModal();return false">☕ Tip</a>
                     </div>
                 </div>
                 <div class="footer-right">
@@ -1268,7 +1343,32 @@
             </div>
         </div>
     </footer>
+    <!-- ── Tip Modal ── -->
+    <div class="tip-modal-overlay" id="tip-modal" onclick="if(event.target===this)closeTipModal()">
+        <div class="tip-modal">
+            <button class="tip-modal-close" onclick="closeTipModal()">✕</button>
+            <div style="font-size:40px;margin-bottom:16px">☕</div>
+            <h3>Support ClawDrop</h3>
+            <p class="tip-subtitle">Send SOL or USDC to help us keep building</p>
+            <div class="tip-label">Solana Wallet Address</div>
+            <div class="tip-address-box" id="tip-address">WALLET_ADDRESS_HERE</div>
+            <button class="tip-copy-btn" id="tip-copy-btn" onclick="copyTipAddress()">📋 Copy Address</button>
+            <div class="tip-networks">Solana mainnet · SOL · USDC · SPL tokens</div>
+        </div>
+    </div>
+
     <script>
+    function openTipModal() { document.getElementById('tip-modal').classList.add('visible'); }
+    function closeTipModal() { document.getElementById('tip-modal').classList.remove('visible'); }
+    function copyTipAddress() {
+        navigator.clipboard.writeText(document.getElementById('tip-address').textContent);
+        const btn = document.getElementById('tip-copy-btn');
+        btn.classList.add('copied');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = '📋 Copy Address'; }, 2000);
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTipModal(); });
+
     const botTokenHelp = {
         telegram: { placeholder: '123456:ABC-DEF...', note: 'Create a bot via @BotFather on Telegram' },
         whatsapp: { placeholder: 'EAAG...', note: 'Get from Meta Business API dashboard' },

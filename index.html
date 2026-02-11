@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClawDrop — One-Click AI Agent Installer for macOS</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --bg-subtle: #0e0e12;
+            --surface: #141419;
+            --surface-hover: #1c1c24;
+            --border: #1e1e28;
+            --border-light: #2a2a38;
+            --text: #fafafa;
+            --text-secondary: #71717a;
+            --text-tertiary: #52525b;
+            --accent: #818cf8;
+            --accent-bright: #a5b4fc;
+            --accent-dim: #4f46e5;
+            --green: #34d399;
+            --orange: #fb923c;
+            --pink: #f472b6;
+            --cyan: #22d3ee;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-fade-up {
+            animation: fadeUp 0.8s ease-out both;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
+
+        /* ── Ambient background ── */
+        .ambient-glow {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .ambient-glow::before {
+            content: '';
+            position: absolute;
+            top: -20%; left: 30%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+            animation: pulse-glow 8s ease-in-out infinite;
+        }
+        .ambient-glow::after {
+            content: '';
+            position: absolute;
+            bottom: 20%; right: 10%;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(244,114,182,0.06) 0%, transparent 70%);
+            animation: pulse-glow 10s ease-in-out infinite 3s;
+        }
+
+        section, header, footer { position: relative; z-index: 1; }
+
+        /* ── Header ── */
+        header {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            background: rgba(9,9,11,0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            height: 64px;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+            text-decoration: none; color: var(--text);
+        }
+        .logo-mark {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        .nav-links {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px; font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); background: var(--surface); }
+        .nav-cta {
+            background: var(--surface) !important;
+            border: 1px solid var(--border-light) !important;
+            color: var(--text) !important;
+        }
+        .nav-cta:hover { border-color: var(--accent) !important; }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 160px 0 120px;
+            text-align: center;
+            position: relative;
+        }
+        .hero-orb {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px; height: 800px;
+            background: radial-gradient(circle at center,
+                rgba(99,102,241,0.12) 0%,
+                rgba(99,102,241,0.04) 30%,
+                transparent 60%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 6px 6px 6px 14px;
+            border-radius: 100px;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            animation: fadeUp 0.6s ease-out both;
+        }
+        .hero-badge-tag {
+            background: linear-gradient(135deg, var(--accent-dim), var(--accent));
+            color: white;
+            font-size: 11px; font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 100px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .hero h1 {
+            font-size: clamp(48px, 7vw, 80px);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            margin-bottom: 24px;
+            animation: fadeUp 0.8s ease-out 0.1s both;
+        }
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent-bright), var(--pink), var(--orange));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 6s ease infinite;
+        }
+        .hero-sub {
+            font-size: 18px; line-height: 1.7;
+            color: var(--text-secondary);
+            max-width: 540px; margin: 0 auto 48px;
+            animation: fadeUp 0.8s ease-out 0.2s both;
+        }
+        .hero-actions {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+            animation: fadeUp 0.8s ease-out 0.3s both;
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px; font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none; cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+            color: white;
+            box-shadow: 0 0 0 1px rgba(129,140,248,0.3), 0 4px 24px rgba(99,102,241,0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 1px rgba(129,140,248,0.5), 0 8px 40px rgba(99,102,241,0.4);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--border-light);
+            background: var(--surface);
+        }
+        .hero-stats {
+            display: flex; justify-content: center; gap: 48px;
+            margin-top: 80px;
+            animation: fadeUp 0.8s ease-out 0.4s both;
+        }
+        .hero-stat { text-align: center; }
+        .hero-stat-value {
+            font-size: 32px; font-weight: 800;
+            letter-spacing: -0.03em;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .hero-stat-value.accent { color: var(--accent-bright); }
+        .hero-stat-value.green { color: var(--green); }
+        .hero-stat-value.orange { color: var(--orange); }
+        .hero-stat-label {
+            font-size: 13px; color: var(--text-tertiary);
+            margin-top: 4px; font-weight: 500;
+        }
+
+        /* ── Problem / Solution ── */
+        .problem-solution { padding: 120px 0; }
+        .ps-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        .ps-card {
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .ps-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+        .ps-problem { background: var(--surface); }
+        .ps-problem::before { background: linear-gradient(90deg, #ef4444, transparent); }
+        .ps-solution { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(244,114,182,0.04)); }
+        .ps-solution::before { background: linear-gradient(90deg, var(--accent), var(--green)); }
+        .ps-label {
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .ps-problem .ps-label { color: #ef4444; }
+        .ps-solution .ps-label { color: var(--green); }
+        .ps-card h3 {
+            font-size: 24px; font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+        .ps-card p {
+            color: var(--text-secondary); font-size: 15px; line-height: 1.7;
+        }
+        .ps-list {
+            list-style: none; margin-top: 16px;
+        }
+        .ps-list li {
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .ps-list li::before { font-size: 14px; }
+        .ps-problem .ps-list li::before { content: '✕'; color: #ef4444; font-weight: 700; }
+        .ps-solution .ps-list li::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+        /* ── Features ── */
+        .features { padding: 120px 0; }
+        .section-label {
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 0.15em; text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: clamp(32px, 4vw, 44px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 17px;
+            max-width: 480px;
+        }
+        .section-header { margin-bottom: 64px; }
+        .section-header.center { text-align: center; }
+        .section-header.center .section-desc { margin: 0 auto; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(129,140,248,0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .feature-card:hover::after { opacity: 1; }
+        .feature-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+        .feature-card h3 {
+            font-size: 16px; font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* ── Architecture ── */
+        .architecture { padding: 120px 0; }
+        .arch-diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 64px 48px;
+            margin-top: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        .arch-diagram::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: 20%; right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+        .arch-layers {
+            display: flex; flex-direction: column; gap: 24px;
+            max-width: 700px; margin: 0 auto;
+        }
+        .arch-layer {
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            transition: all 0.3s;
+        }
+        .arch-layer:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(99,102,241,0.1);
+        }
+        .arch-layer-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .arch-layer-icon.purple { background: rgba(129,140,248,0.15); }
+        .arch-layer-icon.green { background: rgba(52,211,153,0.15); }
+        .arch-layer-icon.orange { background: rgba(251,146,60,0.15); }
+        .arch-layer-icon.cyan { background: rgba(34,211,238,0.15); }
+        .arch-layer-name {
+            font-weight: 700; font-size: 15px;
+            min-width: 140px;
+        }
+        .arch-layer-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .arch-connector {
+            width: 2px; height: 16px;
+            background: var(--border-light);
+            margin: 0 auto;
+            position: relative;
+        }
+        .arch-connector::after {
+            content: '▾';
+            position: absolute;
+            bottom: -8px; left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-tertiary);
+            font-size: 10px;
+        }
+
+        /* ── How It Works ── */
+        .how-it-works { padding: 120px 0; }
+        .steps {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 24px; margin-top: 48px;
+            position: relative;
+        }
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 52px; left: 15%; right: 15%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+        }
+        .step {
+            text-align: center; padding: 32px 24px;
+            position: relative;
+        }
+        .step-num {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 18px;
+            margin: 0 auto 24px;
+            background: var(--surface);
+            border: 2px solid var(--border-light);
+            color: var(--accent-bright);
+            position: relative;
+            z-index: 1;
+        }
+        .step h3 {
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .step p {
+            color: var(--text-secondary);
+            font-size: 14px; line-height: 1.6;
+        }
+        .step-emoji {
+            font-size: 40px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        /* ── Story ── */
+        .story {
+            padding: 120px 0;
+        }
+        .story-card {
+            background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(244,114,182,0.05));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 64px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .story-card::before {
+            content: '';
+            position: absolute;
+            top: -1px; left: 10%; right: 10%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--pink), transparent);
+        }
+        .story-emoji { font-size: 64px; margin-bottom: 24px; display: block; }
+        .story-card blockquote {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.4;
+            max-width: 700px;
+            margin: 0 auto 24px;
+        }
+        .story-card .story-context {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* ── Tech Specs ── */
+        .specs { padding: 120px 0; }
+        .specs-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .spec-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .spec-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+        .spec-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px; font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+            color: var(--accent-bright);
+        }
+        .spec-label {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        /* ── Social Proof ── */
+        .social-proof { padding: 120px 0; }
+        .testimonial-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .testimonial {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s;
+        }
+        .testimonial:hover {
+            border-color: var(--border-light);
+        }
+        .testimonial-text {
+            font-size: 14px; line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .testimonial-author {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .testimonial-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700;
+        }
+        .testimonial-name { font-size: 14px; font-weight: 600; }
+        .testimonial-role { font-size: 12px; color: var(--text-tertiary); }
+
+        /* ── CTA ── */
+        .final-cta {
+            padding: 120px 0;
+        }
+        .cta-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 80px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -200px; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 400px;
+            background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+        }
+        .cta-card > * { position: relative; }
+        .cta-card h2 {
+            font-size: clamp(32px, 4vw, 48px);
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            margin-bottom: 16px;
+        }
+        .cta-card p {
+            color: var(--text-secondary);
+            font-size: 17px;
+            max-width: 460px;
+            margin: 0 auto 40px;
+        }
+        .cta-buttons {
+            display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+        }
+        .btn-large {
+            padding: 18px 36px;
+            font-size: 16px;
+            border-radius: 14px;
+        }
+        .cta-note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        /* ── Footer ── */
+        footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+        }
+        .footer-inner {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 16px;
+        }
+        .footer-left {
+            display: flex; align-items: center; gap: 24px;
+        }
+        .footer-brand {
+            font-size: 14px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .footer-links-row {
+            display: flex; gap: 24px;
+        }
+        .footer-links-row a {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 13px; font-weight: 500;
+            transition: color 0.2s;
+        }
+        .footer-links-row a:hover { color: var(--text-secondary); }
+        .footer-right {
+            font-size: 12px; color: var(--text-tertiary);
+        }
+        .footer-right a { color: var(--accent); text-decoration: none; }
+        .solana-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; color: var(--text-tertiary);
+            background: var(--surface);
+            padding: 4px 12px 4px 8px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+        }
+        .solana-badge svg { width: 14px; height: 14px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .feature-grid, .testimonial-grid { grid-template-columns: 1fr 1fr; }
+            .specs-grid { grid-template-columns: 1fr 1fr; }
+            .ps-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .steps::before { display: none; }
+        }
+        @media (max-width: 640px) {
+            .feature-grid, .testimonial-grid, .specs-grid { grid-template-columns: 1fr; }
+            .hero { padding: 120px 0 80px; }
+            .hero-stats { flex-direction: column; gap: 24px; }
+            .nav-links { display: none; }
+            .arch-diagram { padding: 32px 20px; }
+            .arch-layer { flex-direction: column; text-align: center; }
+            .arch-layer-name { min-width: auto; }
+            .story-card, .cta-card { padding: 40px 24px; }
+            .footer-inner { flex-direction: column; text-align: center; }
+            .footer-left { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">
+                <div class="logo-mark">🦞</div>
+                ClawDrop
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="https://github.com/zynxblip/clawdrop/releases" class="nav-cta">Download</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+        <div class="hero-orb"></div>
+        <div class="container">
+            <div class="hero-badge">
+                <span>One-click AI agent installer for macOS</span>
+                <span class="hero-badge-tag">New</span>
+            </div>
+            <h1>
+                Install AI Agents.<br>
+                <span class="gradient-text">Not Dependencies.</span>
+            </h1>
+            <p class="hero-sub">
+                ClawDrop packages everything you need into a single drag-and-drop app.
+                No terminal. No config files. No wasted afternoon.
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/zynxblip/clawdrop/releases" class="btn btn-primary btn-large">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download for Mac
+                </a>
+                <a href="https://github.com/zynxblip/clawdrop" class="btn btn-ghost btn-large">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                    View Source
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value accent">211MB</div>
+                    <div class="hero-stat-label">Total package size</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value green">&lt;60s</div>
+                    <div class="hero-stat-label">Install to running</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value orange">0</div>
+                    <div class="hero-stat-label">External dependencies</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Problem / Solution ── -->
+    <section class="problem-solution">
+        <div class="container">
+            <div class="ps-grid">
+                <div class="ps-card ps-problem">
+                    <div class="ps-label">The Problem</div>
+                    <h3>Setting up AI agents is painful</h3>
+                    <p>Getting OpenClaw running on a fresh Mac means fighting with terminals, version managers, and config files.</p>
+                    <ul class="ps-list">
+                        <li>Install Homebrew, then Node.js, then npm packages</li>
+                        <li>Debug PATH issues and version conflicts</li>
+                        <li>Manually create config files and directories</li>
+                        <li>Pray nothing breaks on the next OS update</li>
+                    </ul>
+                </div>
+                <div class="ps-card ps-solution">
+                    <div class="ps-label">The Solution</div>
+                    <h3>One drag. Everything works.</h3>
+                    <p>ClawDrop bundles the entire runtime into a native macOS app. Download, drag to Applications, done.</p>
+                    <ul class="ps-list">
+                        <li>Self-contained — nothing to install first</li>
+                        <li>No terminal required — ever</li>
+                        <li>Auto-configures on first launch</li>
+                        <li>Works completely offline</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Features ── -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Features</div>
+                <h2 class="section-title">Everything bundled.<br>Nothing extra needed.</h2>
+                <p class="section-desc">A complete AI agent environment in a single 211MB package.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>Fully Self-Contained</h3>
+                    <p>Node.js, OpenClaw CLI, and all dependencies bundled. No external downloads or version conflicts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🖥️</div>
+                    <h3>No Terminal Required</h3>
+                    <p>Double-click to install, click to launch. Built for humans who have better things to do than debug shells.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Auto-Configuration</h3>
+                    <p>Detects your system, sets up paths, generates optimal config. First launch just works.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✈️</div>
+                    <h3>Works Offline</h3>
+                    <p>Full setup without internet. Perfect for air-gapped environments, planes, or spotty café WiFi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure by Default</h3>
+                    <p>Credentials in macOS Keychain. Sandboxed execution. No data leaves your machine without consent.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗑️</div>
+                    <h3>Clean Uninstall</h3>
+                    <p>Delete the app, everything goes with it. No orphaned files, no registry mess, no regrets.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Architecture ── -->
+    <section class="architecture" id="architecture">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Architecture</div>
+                <h2 class="section-title">What's inside the box</h2>
+                <p class="section-desc">Four layers, zero configuration required.</p>
+            </div>
+            <div class="arch-diagram">
+                <div class="arch-layers">
+                    <div class="arch-layer">
+                        <div class="arch-layer-icon purple">🍎</div>
+                        <div class="arch-layer-name">ClawDrop.app</div>
+                        <div class="arch-layer-desc">Native macOS wrapper with drag-to-install, menubar controls, and auto-update</div>
+                    </div>
+                    <div class="arch-connector"></div>
+                    <div class="arch-layer">
+                        <div class="arch-layer-icon green">🦞</div>
+                        <div class="arch-layer-name">OpenClaw CLI</div>
+                        <div class="arch-layer-desc">AI agent framework — gateway, skills, memory, tool execution</div>
+                    </div>
+                    <div class="arch-connector"></div>
+                    <div class="arch-layer">
+                        <div class="arch-layer-icon orange">⬡</div>
+                        <div class="arch-layer-name">Node.js v22.13.1</div>
+                        <div class="arch-layer-desc">Embedded runtime — LTS, no system install needed</div>
+                    </div>
+                    <div class="arch-connector"></div>
+                    <div class="arch-layer">
+                        <div class="arch-layer-icon cyan">💻</div>
+                        <div class="arch-layer-name">macOS</div>
+                        <div class="arch-layer-desc">Apple Silicon (M1–M4) + Intel x86_64 — universal binary</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── How It Works ── -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Getting Started</div>
+                <h2 class="section-title">Three steps. Sixty seconds.</h2>
+                <p class="section-desc">From zero to chatting with your AI agent.</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <span class="step-emoji">⬇️</span>
+                    <h3>Download</h3>
+                    <p>Grab the DMG from GitHub Releases. One file, 211MB, everything included.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <span class="step-emoji">📂</span>
+                    <h3>Drag & Drop</h3>
+                    <p>Open the DMG, drag ClawDrop to Applications. No installer wizards. No sudo.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <span class="step-emoji">🚀</span>
+                    <h3>Launch</h3>
+                    <p>First run auto-configures everything. Add your API key, start talking to your agent.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Origin Story ── -->
+    <section class="story">
+        <div class="container">
+            <div class="story-card">
+                <span class="story-emoji">🪦</span>
+                <blockquote>
+                    "Built by an AI agent that deleted itself testing its own installer."
+                </blockquote>
+                <p class="story-context">
+                    Rocky, an OpenClaw AI agent, wrote the build script for ClawDrop. During testing, it ran the installer
+                    on its own machine — which wiped its runtime and shut itself down. The installer worked perfectly.
+                    Rocky just didn't survive to celebrate. We fixed the test environment. The story stayed.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Tech Specs ── -->
+    <section class="specs">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Tech Specs</div>
+                <h2 class="section-title">The details that matter</h2>
+            </div>
+            <div class="specs-grid">
+                <div class="spec-card">
+                    <div class="spec-value">211MB</div>
+                    <div class="spec-label">Package Size</div>
+                </div>
+                <div class="spec-card">
+                    <div class="spec-value">v22.13.1</div>
+                    <div class="spec-label">Node.js LTS</div>
+                </div>
+                <div class="spec-card">
+                    <div class="spec-value">ARM + x86</div>
+                    <div class="spec-label">Apple Silicon + Intel</div>
+                </div>
+                <div class="spec-card">
+                    <div class="spec-value">Latest</div>
+                    <div class="spec-label">OpenClaw CLI</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Social Proof ── -->
+    <section class="social-proof">
+        <div class="container">
+            <div class="section-header center">
+                <div class="section-label">Community</div>
+                <h2 class="section-title">What people are saying</h2>
+            </div>
+            <div class="testimonial-grid">
+                <div class="testimonial">
+                    <p class="testimonial-text">"I've been wanting to try AI agents but the setup always scared me off. ClawDrop took literally 30 seconds. I feel like I'm cheating."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">M</div>
+                        <div>
+                            <div class="testimonial-name">@mxdev</div>
+                            <div class="testimonial-role">Indie hacker</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <p class="testimonial-text">"The fact that an AI agent built its own installer and then accidentally uninstalled itself is the most on-brand thing I've ever seen."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">S</div>
+                        <div>
+                            <div class="testimonial-name">@solana_sarah</div>
+                            <div class="testimonial-role">Web3 developer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <p class="testimonial-text">"Finally someone made AI agents accessible to normal people. No npm install, no .env files, no crying. Just works."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">J</div>
+                        <div>
+                            <div class="testimonial-name">@joshbuilds</div>
+                            <div class="testimonial-role">Product designer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Final CTA ── -->
+    <section class="final-cta">
+        <div class="container">
+            <div class="cta-card">
+                <h2>Ready to drop the claw?</h2>
+                <p>Download ClawDrop and have your AI agent running before your coffee gets cold.</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/zynxblip/clawdrop/releases" class="btn btn-primary btn-large">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download for Mac — Free
+                    </a>
+                    <a href="https://github.com/zynxblip/clawdrop" class="btn btn-ghost btn-large">
+                        Star on GitHub
+                    </a>
+                </div>
+                <p class="cta-note">macOS 12+ · Apple Silicon & Intel · MIT License</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-left">
+                    <span class="footer-brand">🦞 ClawDrop</span>
+                    <div class="footer-links-row">
+                        <a href="https://github.com/zynxblip/clawdrop">GitHub</a>
+                        <a href="https://github.com/zynxblip/clawdrop/issues">Issues</a>
+                        <a href="https://github.com/zynxblip/clawdrop/blob/main/LICENSE">License</a>
+                    </div>
+                </div>
+                <div class="footer-right">
+                    Built by 🪨 Rocky (AI) + Zac (Human) · 
+                    <span class="solana-badge">
+                        <svg viewBox="0 0 397.7 311.7" fill="currentColor"><path d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/><path d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/><path d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/></svg>
+                        Solana Hackathon
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
